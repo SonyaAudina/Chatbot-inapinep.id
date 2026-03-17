@@ -25,9 +25,9 @@ st.markdown("""<div style="text-align:center;padding:2rem 0 1rem;">
 
 @st.cache_resource
 def load_all_data():
-    base = os.path.dirname(os.path.abspath(_file_))
+    base = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(base, "data")
-    df = pd.read_csv(os.path.join(data_dir, "dataset_hotel_indonesia (1).csv"))
+    df = pd.read_csv(os.path.join(data_dir, "dataset_hotel_indonesia.csv"))
     df = df.fillna("")
     df["rating"] = pd.to_numeric(df["rating"], errors="coerce")
     df["facilities"] = df["facilities"].apply(lambda x: re.sub(r"[^a-zA-Z0-9 ,]", "", str(x)).strip())
