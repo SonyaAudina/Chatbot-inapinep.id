@@ -83,10 +83,14 @@ def ask_hf(messages):
 
 def cari_hotel(query, kota=None, max_harga=None, min_rating=None):
     hasil = df.copy()
-    if kota: hasil = hasil[hasil["city"].str.contains(kota, case=False, na=False)]
-    if max_harga: hasil = hasil[hasil["min_price"] <= max_harga]
-    if min_rating: hasil = hasil[hasil["rating"] >= min_rating]
-    if query: hasil = hasil[hasil["text"].str.contains(query.lower(), na=False)]
+    if kota:
+        hasil = hasil[hasil["city"].str.contains(kota, case=False, na=False, regex=False)]
+    if max_harga:
+        hasil = hasil[hasil["min_price"] <= max_harga]
+    if min_rating:
+        hasil = hasil[hasil["rating"] >= min_rating]
+    if query:
+        hasil = hasil[hasil["text"].str.contains(query.lower(), na=False, regex=False)]
     return hasil.sort_values("rating", ascending=False).head(5)
 
 def format_hotel(row):
@@ -120,7 +124,7 @@ if len(st.session_state.messages) == 0:
         st.markdown('</div>', unsafe_allow_html=True)
     with col3:
         st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
-        if st.button("Hotel dengan spa & kolam renang", key="btn3", use_container_width=True):
+        if st.button("Hotel dengan spa dan kolam renang", key="btn3", use_container_width=True):
             st.session_state.trigger_prompt = "Hotel dengan spa dan kolam renang"
         st.markdown('</div>', unsafe_allow_html=True)
 
