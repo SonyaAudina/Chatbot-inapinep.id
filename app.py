@@ -101,73 +101,78 @@ def format_hotel(row):
         "</div>"
     )
 
-SYSTEM_PROMPT = """inapinep.id — asisten rekomendasi hotel Indonesia yang cerdas, ramah, dan friendly untuk perempuan.
+def proses_chat(prompt):
+    kota_keywords = ["surabaya","jakarta","semarang","bandung","yogyakarta","malang","madiun","gresik","pacitan","magelang"]
+    kota_found = next((k for k in kota_keywords if k in prompt.lower()), None)
+    hotel_results = cari_hotel(prompt, kota=kota_found)
+    context = ""
+    hotel_cards = ""
+    if len(hotel_results) > 0:
+        hotel_cards = "".join([format_hotel(row) for _, row in hotel_results.iterrows()])
+        context = f"\nData hotel relevan: {hotel_results[['hotel_name','city','rating','min_price','max_price','property_type']].to_string()}"
+    SYSTEM_PROMPT = """inapinep.id — asisten rekomendasi hotel Indonesia yang cerdas, ramah, dan friendly untuk perempuan.
 Kamu membantu pengguna menemukan hotel terbaik di Indonesia berdasarkan kota, fasilitas, budget, dan rating.
 Kamu bisa rekomendasikan hotel di kota tertentu, cari berdasarkan fasilitas, info budget, dan tips memilih hotel.
 Format jawaban: Bahasa Indonesia yang hangat, ramah, dan encouraging! Gunakan emoji yang sesuai 🌸✨💕"""
+    ai_messages = [{"role": "system", "content": SYSTEM_PROMPT + context}]
+    for m in st.session_state.messages:
+        ai_messages.append({"role": m["role"], "content": m["content"]})
+    ai_messages.append({"role": "user", "content": prompt})
+    full_reply = ask_hf(ai_messages)
+    return hotel_cards, full_reply
 
 if "messages" not in st.session_state: st.session_state.messages = []
-if "trigger_prompt" not in st.session_state: st.session_state.trigger_prompt = None
 
 # Suggestion buttons (hanya saat belum ada chat)
 if len(st.session_state.messages) == 0:
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
-        if st.button("Hotel di Surabaya", key="btn1", use_container_width=True):
-            st.session_state.trigger_prompt = "Hotel di Surabaya"
+        clicked1 = st.button("Hotel di Surabaya", key="btn1", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     with col2:
         st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
-        if st.button("Hotel murah di Jakarta", key="btn2", use_container_width=True):
-            st.session_state.trigger_prompt = "Hotel murah di Jakarta"
+        clicked2 = st.button("Hotel murah di Jakarta", key="btn2", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     with col3:
         st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
-        if st.button("Hotel dengan spa dan kolam renang", key="btn3", use_container_width=True):
-            st.session_state.trigger_prompt = "Hotel dengan spa dan kolam renang"
+        clicked3 = st.button("Hotel dengan spa dan kolam renang", key="btn3", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-# Process trigger — langsung jawab saat diklik
-if st.session_state.trigger_prompt:
-    prompt = st.session_state.trigger_prompt
-    st.session_state.trigger_prompt = None
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    kota_keywords = ["surabaya","jakarta","semarang","bandung","yogyakarta","malang","madiun","gresik","pacitan","magelang"]
-    kota_found = next((k for k in kota_keywords if k in prompt.lower()), None)
-    hotel_results = cari_hotel(prompt, kota=kota_found)
-    context = ""
-    if len(hotel_results) > 0:
-        context = f"\nData hotel relevan: {hotel_results[['hotel_name','city','rating','min_price','max_price','property_type']].to_string()}"
-    ai_messages = [{"role": "system", "content": SYSTEM_PROMPT + context}]
-    for m in st.session_state.messages:
-        ai_messages.append({"role": m["role"], "content": m["content"]})
-    full_reply = ask_hf(ai_messages)
-    st.session_state.messages.append({"role": "assistant", "content": full_reply})
-    st.rerun()
+    # Tangani klik tombol langsung di sini
+    prompt_from_btn = None
+    if clicked1: prompt_from_btn = "Hotel di Surabaya"
+    elif clicked2: prompt_from_btn = "Hotel murah di Jakarta"
+    elif clicked3: prompt_from_btn = "Hotel dengan spa dan kolam renang"
 
+    if prompt_from_btn:
+        st.session_state.messages.append({"role": "user", "content": prompt_from_btn})
+        with st.chat_message("user"):
+            st.markdown(prompt_from_btn)
+        with st.chat_message("assistant"):
+            with st.spinner("Mencarikan hotel terbaik untukmu 🌸..."):
+                hotel_cards, full_reply = proses_chat(prompt_from_btn)
+                if hotel_cards:
+                    st.markdown(hotel_cards, unsafe_allow_html=True)
+                st.markdown(full_reply, unsafe_allow_html=True)
+                st.session_state.messages.append({"role": "assistant", "content": full_reply})
+        st.rerun()
+
+# Chat history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"], unsafe_allow_html=True)
 
+# Chat input
 if prompt := st.chat_input("Penginapan terbaik khusus untukmu 🌸"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
     with st.chat_message("assistant"):
         with st.spinner("Mencarikan hotel terbaik untukmu 🌸..."):
-            kota_keywords = ["surabaya","jakarta","semarang","bandung","yogyakarta","malang","madiun","gresik","pacitan","magelang"]
-            kota_found = next((k for k in kota_keywords if k in prompt.lower()), None)
-            hotel_results = cari_hotel(prompt, kota=kota_found)
-            context = ""
-            if len(hotel_results) > 0:
-                hotel_cards = "".join([format_hotel(row) for _, row in hotel_results.iterrows()])
-                context = f"\nData hotel relevan: {hotel_results[['hotel_name','city','rating','min_price','max_price','property_type']].to_string()}"
+            hotel_cards, full_reply = proses_chat(prompt)
+            if hotel_cards:
                 st.markdown(hotel_cards, unsafe_allow_html=True)
-            ai_messages = [{"role": "system", "content": SYSTEM_PROMPT + context}]
-            for m in st.session_state.messages:
-                ai_messages.append({"role": m["role"], "content": m["content"]})
-            full_reply = ask_hf(ai_messages)
             st.markdown(full_reply, unsafe_allow_html=True)
             st.session_state.messages.append({"role": "assistant", "content": full_reply})
 
