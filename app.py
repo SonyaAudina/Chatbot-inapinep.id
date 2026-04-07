@@ -8,6 +8,11 @@ from huggingface_hub import InferenceClient
 
 st.set_page_config(page_title="inapinep.id", layout="centered")
 
+LOGO3 = "https://raw.githubusercontent.com/SonyaAudina/Chatbot-inapinep.id/main/stiker%20lucuk%203.png"
+LOGO4 = "https://raw.githubusercontent.com/SonyaAudina/Chatbot-inapinep.id/main/stiker%20lucuk%204.png"
+LOGO5 = "https://raw.githubusercontent.com/SonyaAudina/Chatbot-inapinep.id/main/stiker%20lucuk%205.png"
+LOGO2 = "https://raw.githubusercontent.com/SonyaAudina/Chatbot-inapinep.id/main/stiker%20lucuk%202.png"
+
 st.markdown("""<style>
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600&display=swap");
 html, body, .stApp { background-color: #fff0f5 !important; color: #4a1942 !important; font-family: Nunito, sans-serif !important; }
@@ -15,12 +20,19 @@ html, body, .stApp { background-color: #fff0f5 !important; color: #4a1942 !impor
 [data-testid="stChatInput"] textarea { background: #fff5f8 !important; color: #4a1942 !important; border: 2px solid #e8a0b4 !important; border-radius: 20px !important; }
 .stButton button { background: linear-gradient(135deg, #e8a0b4, #d4608a) !important; color: white !important; border: none !important; border-radius: 20px !important; font-weight: 700 !important; }
 [data-testid="stChatMessage"] { background: #fff5f8 !important; border: 1px solid #f0c4d4 !important; border-radius: 20px !important; padding: 14px !important; margin: 6px 0 !important; }
+.suggest-btn button { background: #fff5f8 !important; border: 1.5px solid #e8a0b4 !important; color: #d4608a !important; border-radius: 20px !important; font-size: 0.82rem !important; font-weight: 600 !important; width: 100% !important; }
+.suggest-btn button:hover { background: #ffe0ef !important; }
 </style>""", unsafe_allow_html=True)
 
-st.markdown("""<div style="text-align:center;padding:2rem 0 1rem;">
+st.markdown(f"""<div style="text-align:center;padding:2rem 0 1rem;">
 <div style="font-family:serif;font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,#e8a0b4,#d4608a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">inapinep.id</div>
-<div style="color:#b06080;font-size:0.9rem;margin-top:8px;">Temukan hotel impianmu ✨ · Pulau Jawa 🌷 · Rekomendasi fasilitas 💆‍♀️ · Info harga & rating 💕</div>
-<div style="margin-top:12px;display:inline-block;background:#fff5f8;border:1px solid #e8a0b4;padding:4px 16px;border-radius:20px;font-size:0.75rem;color:#d4608a;"> ONLINE</div>
+<div style="color:#b06080;font-size:0.9rem;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;">
+<img src="{LOGO3}" width="24" style="vertical-align:middle;border-radius:50%;"> Temukan hotel impianmu
+· <img src="{LOGO4}" width="24" style="vertical-align:middle;border-radius:50%;"> Pulau Jawa
+· <img src="{LOGO5}" width="24" style="vertical-align:middle;border-radius:50%;"> Rekomendasi fasilitas
+· <img src="{LOGO2}" width="24" style="vertical-align:middle;border-radius:50%;"> Info harga &amp; rating
+</div>
+<div style="margin-top:12px;display:inline-block;background:#fff5f8;border:1px solid #e8a0b4;padding:4px 16px;border-radius:20px;font-size:0.75rem;color:#d4608a;">🟢 ONLINE</div>
 </div>""", unsafe_allow_html=True)
 
 @st.cache_resource
@@ -68,20 +80,50 @@ def format_hotel(row):
         "</div>"
     )
 
-SYSTEM_PROMPT = """inapinep.id  — asisten rekomendasi hotel Indonesia yang cerdas, ramah, dan friendly untuk perempuan.
+SYSTEM_PROMPT = """inapinep.id — asisten rekomendasi hotel Indonesia yang cerdas, ramah, dan friendly untuk perempuan.
 Kamu membantu pengguna menemukan hotel terbaik di Indonesia berdasarkan kota, fasilitas, budget, dan rating.
 Kamu bisa rekomendasikan hotel di kota tertentu, cari berdasarkan fasilitas, info budget, dan tips memilih hotel.
 Format jawaban: Bahasa Indonesia yang hangat, ramah, dan encouraging! Gunakan emoji yang sesuai 🌸✨💕"""
 
 if "messages" not in st.session_state: st.session_state.messages = []
+if "trigger_prompt" not in st.session_state: st.session_state.trigger_prompt = None
 
+# Suggestion buttons (hanya saat belum ada chat)
 if len(st.session_state.messages) == 0:
-    st.markdown("""<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:1.5rem;">
-    <div style="background:#fff5f8;border:1px solid #e8a0b4;padding:8px 16px;border-radius:20px;font-size:0.82rem;color:#d4608a;">Hotel di Surabaya yang romantis</div>
-    <div style="background:#fff5f8;border:1px solid #d4608a;padding:8px 16px;border-radius:20px;font-size:0.82rem;color:#b04070;">Hotel murah di Jakarta</div>
-    <div style="background:#fff5f8;border:1px solid #f0a0c0;padding:8px 16px;border-radius:20px;font-size:0.82rem;color:#c05080;">Hotel dengan spa & kolam renang</div>
-    <div style="background:#fff5f8;border:1px solid #c080a0;padding:8px 16px;border-radius:20px;font-size:0.82rem;color:#905070;">Tips memilih hotel yang nyaman</div>
-    </div>""", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
+        if st.button("Hotel di Surabaya yang nyaman", key="btn1", use_container_width=True):
+            st.session_state.trigger_prompt = "Hotel di Surabaya yang nyaman"
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
+        if st.button("Hotel murah di Jakarta", key="btn2", use_container_width=True):
+            st.session_state.trigger_prompt = "Hotel murah di Jakarta"
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
+        if st.button("Hotel dengan spa & kolam renang", key="btn3", use_container_width=True):
+            st.session_state.trigger_prompt = "Hotel dengan spa dan kolam renang"
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# Process trigger dari suggestion buttons
+if st.session_state.trigger_prompt:
+    prompt = st.session_state.trigger_prompt
+    st.session_state.trigger_prompt = None
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    kota_keywords = ["surabaya","jakarta","semarang","bandung","yogyakarta","malang","madiun","gresik","pacitan","magelang"]
+    kota_found = next((k for k in kota_keywords if k in prompt.lower()), None)
+    hotel_results = cari_hotel(prompt, kota=kota_found)
+    context = ""
+    if len(hotel_results) > 0:
+        context = f"\nData hotel relevan: {hotel_results[['hotel_name','city','rating','min_price','max_price','property_type']].to_string()}"
+    ai_messages = [{"role": "system", "content": SYSTEM_PROMPT + context}]
+    for m in st.session_state.messages:
+        ai_messages.append({"role": m["role"], "content": m["content"]})
+    full_reply = ask_hf(ai_messages)
+    st.session_state.messages.append({"role": "assistant", "content": full_reply})
+    st.rerun()
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
