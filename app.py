@@ -18,10 +18,27 @@ st.markdown("""<style>
 html, body, .stApp { background-color: #fff0f5 !important; color: #4a1942 !important; font-family: Nunito, sans-serif !important; }
 #MainMenu, footer, header {visibility: hidden;}
 [data-testid="stChatInput"] textarea { background: #fff5f8 !important; color: #4a1942 !important; border: 2px solid #e8a0b4 !important; border-radius: 20px !important; }
-.stButton button { background: linear-gradient(135deg, #e8a0b4, #d4608a) !important; color: white !important; border: none !important; border-radius: 20px !important; font-weight: 700 !important; }
 [data-testid="stChatMessage"] { background: #fff5f8 !important; border: 1px solid #f0c4d4 !important; border-radius: 20px !important; padding: 14px !important; margin: 6px 0 !important; }
-.suggest-btn button { background: #fff5f8 !important; border: 1.5px solid #e8a0b4 !important; color: #d4608a !important; border-radius: 20px !important; font-size: 0.82rem !important; font-weight: 600 !important; width: 100% !important; }
-.suggest-btn button:hover { background: #ffe0ef !important; }
+.suggest-btn button {
+    background: linear-gradient(135deg, #e8a0b4, #d4608a) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 20px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    width: 100% !important;
+    height: 56px !important;
+    white-space: normal !important;
+    line-height: 1.3 !important;
+}
+.suggest-btn button:hover { opacity: 0.88 !important; }
+.stButton button {
+    background: linear-gradient(135deg, #e8a0b4, #d4608a) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
+}
 </style>""", unsafe_allow_html=True)
 
 st.markdown(f"""<div style="text-align:center;padding:2rem 0 1rem;">
@@ -93,8 +110,8 @@ if len(st.session_state.messages) == 0:
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
-        if st.button("Hotel di Surabaya yang nyaman", key="btn1", use_container_width=True):
-            st.session_state.trigger_prompt = "Hotel di Surabaya yang nyaman"
+        if st.button("Hotel di Surabaya", key="btn1", use_container_width=True):
+            st.session_state.trigger_prompt = "Hotel di Surabaya"
         st.markdown('</div>', unsafe_allow_html=True)
     with col2:
         st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
@@ -107,7 +124,7 @@ if len(st.session_state.messages) == 0:
             st.session_state.trigger_prompt = "Hotel dengan spa dan kolam renang"
         st.markdown('</div>', unsafe_allow_html=True)
 
-# Process trigger dari suggestion buttons
+# Process trigger — langsung jawab saat diklik
 if st.session_state.trigger_prompt:
     prompt = st.session_state.trigger_prompt
     st.session_state.trigger_prompt = None
