@@ -27,14 +27,10 @@ html, body, .stApp { background-color: #fff0f5 !important; color: #4a1942 !impor
     font-size: 0.85rem !important;
     font-weight: 600 !important;
     width: 100% !important;
-    min-height: 64px !important;
-    height: auto !important;
-    white-space: normal !important;
-    line-height: 1.4 !important;
-    padding: 10px 12px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    height: 56px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 .suggest-btn button:hover { opacity: 0.88 !important; }
 .stButton button {
@@ -43,9 +39,6 @@ html, body, .stApp { background-color: #fff0f5 !important; color: #4a1942 !impor
     border: none !important;
     border-radius: 20px !important;
     font-weight: 700 !important;
-}
-div[data-testid="column"] .suggest-btn {
-    height: 100% !important;
 }
 </style>""", unsafe_allow_html=True)
 
@@ -151,13 +144,13 @@ if len(st.session_state.messages) == 0:
         st.markdown('</div>', unsafe_allow_html=True)
     with col3:
         st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
-        clicked3 = st.button("Hotel dengan spa dan kolam renang", key="btn3", use_container_width=True)
+        clicked3 = st.button("Hotel dengan kolam renang", key="btn3", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     prompt_from_btn = None
     if clicked1: prompt_from_btn = "Hotel di Surabaya"
     elif clicked2: prompt_from_btn = "Hotel murah di Jakarta"
-    elif clicked3: prompt_from_btn = "Hotel dengan spa dan kolam renang"
+    elif clicked3: prompt_from_btn = "Hotel dengan kolam renang"
 
     if prompt_from_btn:
         st.session_state.messages.append({"role": "user", "content": prompt_from_btn})
