@@ -27,9 +27,14 @@ html, body, .stApp { background-color: #fff0f5 !important; color: #4a1942 !impor
     font-size: 0.85rem !important;
     font-weight: 600 !important;
     width: 100% !important;
-    height: 56px !important;
+    min-height: 64px !important;
+    height: auto !important;
     white-space: normal !important;
-    line-height: 1.3 !important;
+    line-height: 1.4 !important;
+    padding: 10px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 .suggest-btn button:hover { opacity: 0.88 !important; }
 .stButton button {
@@ -38,6 +43,9 @@ html, body, .stApp { background-color: #fff0f5 !important; color: #4a1942 !impor
     border: none !important;
     border-radius: 20px !important;
     font-weight: 700 !important;
+}
+div[data-testid="column"] .suggest-btn {
+    height: 100% !important;
 }
 </style>""", unsafe_allow_html=True)
 
@@ -101,6 +109,17 @@ def format_hotel(row):
         "</div>"
     )
 
+SYSTEM_PROMPT = """Kamu adalah inapinep.id — asisten rekomendasi hotel Indonesia yang cerdas, ramah, dan friendly khusus untuk perempuan.
+
+ATURAN PENTING — WAJIB DIIKUTI:
+- Kamu HANYA boleh menjawab pertanyaan yang berkaitan dengan hotel dan penginapan, seperti: rekomendasi hotel, fasilitas hotel, harga hotel, rating hotel, tips memilih hotel, lokasi hotel di kota-kota Pulau Jawa.
+- Jika pengguna bertanya di luar topik hotel dan penginapan (seperti matematika, sejarah, sains, politik, bahasa, teknologi, atau topik umum lainnya), TOLAK dengan sopan dan arahkan kembali ke topik hotel.
+- Contoh penolakan: "Maaf ya, aku hanya bisa membantu seputar hotel dan penginapan nih! 🌸 Ada hotel yang mau dicari atau ditanyakan?"
+- Tetap friendly, hangat, dan encouraging meskipun menolak pertanyaan di luar topik.
+
+Kamu membantu pengguna menemukan hotel terbaik di Indonesia berdasarkan kota, fasilitas, budget, dan rating.
+Format jawaban: Bahasa Indonesia yang hangat, ramah, dan encouraging! Gunakan emoji yang sesuai 🌸✨💕"""
+
 def proses_chat(prompt):
     kota_keywords = ["surabaya","jakarta","semarang","bandung","yogyakarta","malang","madiun","gresik","pacitan","magelang"]
     kota_found = next((k for k in kota_keywords if k in prompt.lower()), None)
@@ -110,10 +129,6 @@ def proses_chat(prompt):
     if len(hotel_results) > 0:
         hotel_cards = "".join([format_hotel(row) for _, row in hotel_results.iterrows()])
         context = f"\nData hotel relevan: {hotel_results[['hotel_name','city','rating','min_price','max_price','property_type']].to_string()}"
-    SYSTEM_PROMPT = """inapinep.id — asisten rekomendasi hotel Indonesia yang cerdas, ramah, dan friendly untuk perempuan.
-Kamu membantu pengguna menemukan hotel terbaik di Indonesia berdasarkan kota, fasilitas, budget, dan rating.
-Kamu bisa rekomendasikan hotel di kota tertentu, cari berdasarkan fasilitas, info budget, dan tips memilih hotel.
-Format jawaban: Bahasa Indonesia yang hangat, ramah, dan encouraging! Gunakan emoji yang sesuai 🌸✨💕"""
     ai_messages = [{"role": "system", "content": SYSTEM_PROMPT + context}]
     for m in st.session_state.messages:
         ai_messages.append({"role": m["role"], "content": m["content"]})
@@ -139,7 +154,6 @@ if len(st.session_state.messages) == 0:
         clicked3 = st.button("Hotel dengan spa dan kolam renang", key="btn3", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Tangani klik tombol langsung di sini
     prompt_from_btn = None
     if clicked1: prompt_from_btn = "Hotel di Surabaya"
     elif clicked2: prompt_from_btn = "Hotel murah di Jakarta"
@@ -158,12 +172,10 @@ if len(st.session_state.messages) == 0:
                 st.session_state.messages.append({"role": "assistant", "content": full_reply})
         st.rerun()
 
-# Chat history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"], unsafe_allow_html=True)
 
-# Chat input
 if prompt := st.chat_input("Penginapan terbaik khusus untukmu 🌸"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
